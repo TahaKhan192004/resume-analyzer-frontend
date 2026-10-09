@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { apiFetch, exportUrl, getToken } from "@/lib/api";
+import { apiFetch, exportSelectedUrl, exportUrl, getToken } from "@/lib/api";
 import type { Applicant, JobProfile } from "@/types/domain";
 
 function scoreOf(applicant: Applicant): number | null {
@@ -177,12 +177,11 @@ export default function ApplicantsPage() {
     }
   }
 
-  async function exportCsv() {
-    if (!exportJobId) return;
+  async function downloadCsv(request: () => Promise<Response>, fileName: string) {
     setError("");
     setMessage("");
     try {
-      const response = await fetch(exportUrl(exportJobId, decision || undefined), { headers: { Authorization: `Bearer ${getToken()}` } });
+      const response = await request();
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { detail?: string };
         throw new Error(body.detail ?? `Export failed: ${response.status}`);
@@ -190,12 +189,32 @@ export default function ApplicantsPage() {
       const url = window.URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${decision || "all"}-enriched-applicants.csv`;
+      anchor.download = fileName;
       anchor.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not export CSV.");
     }
+  }
+
+  function exportAll() {
+    if (!exportJobId) return;
+    return downloadCsv(
+      () => fetch(exportUrl(exportJobId, decision || undefined), { headers: { Authorization: `Bearer ${getToken()}` } }),
+      `${decision || "all"}-enriched-applicants.csv`
+    );
+  }
+
+  function exportSelected() {
+    if (!selectedIds.length) return;
+    return downloadCsv(
+      () => fetch(exportSelectedUrl(), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ applicant_ids: selectedIds })
+      }),
+      "selected-enriched-applicants.csv"
+    );
   }
 
   function toggleSelected(id: string) {
@@ -287,15 +306,19 @@ export default function ApplicantsPage() {
         <div className="flex flex-col gap-3 border-b border-line p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-black text-ink">Export CSV</p>
-            <p className="mt-1 text-sm text-[#5f6f6b]">Download the enriched CSV for a job, sorted by score. Uses the decision filter above{decision ? ` (${decision})` : " (all decisions)"}.</p>
+            <p className="mt-1 text-sm text-[#5f6f6b]">Sorted by score. &quot;Export all&quot; covers every applicant for the chosen job and uses the decision filter above{decision ? ` (${decision})` : " (all decisions)"}. &quot;Export selected&quot; covers only the ticked rows.</p>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <select className="focus-ring min-h-10 rounded-md border border-line bg-white px-3 text-sm" value={exportJobId} onChange={(event) => setExportJobId(event.target.value)}>
               {jobs.map((job) => <option key={job.id} value={job.id}>{job.title}</option>)}
             </select>
-            <Button className="bg-moss" onClick={exportCsv} disabled={!exportJobId}>
+            <Button className="bg-moss" onClick={exportAll} disabled={!exportJobId}>
               <FileDown size={16} />
-              Export CSV
+              Export all
+            </Button>
+            <Button className="bg-[#4d5752] hover:bg-[#3c4541]" onClick={exportSelected} disabled={!selectedIds.length}>
+              <FileDown size={16} />
+              Export selected ({selectedIds.length})
             </Button>
           </div>
         </div>

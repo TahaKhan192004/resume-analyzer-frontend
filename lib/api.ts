@@ -45,6 +45,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return response.json() as Promise<T>;
 }
 
+export function exportSelectedUrl() {
+  return `${API_BASE}/exports/csv/selected`;
+}
+
 export function exportUrl(jobId: string, decision?: string) {
   const params = new URLSearchParams({ job_id: jobId });
   if (decision) params.set("decision", decision);
