@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, FileDown, FileUp, LayoutDashboard, Mail, Users } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, FileUp, LayoutDashboard, Mail, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,6 @@ const nav = [
   { href: "/imports", label: "Imports", icon: FileUp },
   { href: "/applicants", label: "Applicants", icon: Users },
   { href: "/emails", label: "Emails", icon: Mail },
-  { href: "/exports", label: "Exports", icon: FileDown },
   { href: "/analytics", label: "Analytics", icon: BarChart3 }
 ];
 

@@ -62,6 +62,8 @@ export type Applicant = {
   candidate_name?: string;
   candidate_email?: string;
   applied_role?: string;
+  import_id?: string | null;
+  import_file_name?: string | null;
   processing_status: string;
   review_status?: string;
   candidate_stage?: string;
